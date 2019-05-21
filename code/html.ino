@@ -23,20 +23,17 @@ void run_html(WiFiClient client )
                 "<title>2Mundos - IoT Door</title>" \
                 "<link rel='icon' href='data:,'>" \  
                 "<meta charset='UTF-8'>" \
-                "<meta name='description' content='Interface Web para Controle da Porta da 2Mundos'>" \
+                "<meta name='description' content='Interface web para controle da porta da 2Mundos'>" \
                 "<meta name='author' content='Roger Moschiel'>" \
                 "<meta name='viewport' content='width=device-width,initial-scale=1'>");
-    
             #if WIFI_ACCESS_POINT
-                client.print("<meta http-equiv='refresh' content='5;url=//192.168.4.1'>");
+                if(acionado)
+                    client.print("<meta http-equiv='refresh' content='5;url=//192.168.4.1'>");
             #endif
             
                 client.print( \
                 "<style media='screen' type='text/css'>" \
                     "html{font-family:Helvetica;display:inline-block;margin:0px auto;text-align:center;}" \
-                    ".button {width:250px;background-color:#4CAF50;border:2px solid #4CAF50;color:white;padding:6px 40px;text-decoration:none;font-size:30px;margin:2px;cursor:pointer;}" \
-                    ".button:active{background-color:white;color:#4CAF50;}" \
-                    ".button:hover{background-color:white;color:#4CAF50;}" \
                 "</style>" \
                 "<script>" \
                     "var canvas_size=200;" \
@@ -99,7 +96,7 @@ void run_html(WiFiClient client )
                 "</p>" \
                 "<hr>" \
                 "<p>" \
-                    "<canvas id='myCanvas' width='200' height='200' style='border:1px solid #00004d;'></canvas>" \ 
+                    "<canvas id='myCanvas' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \ 
                 "</p>" \
                 "<script>" \
                     "DrawCircleButton();");

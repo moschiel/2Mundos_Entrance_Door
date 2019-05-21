@@ -1,4 +1,4 @@
-#define WIFI_ACCESS_POINT false 
+#define WIFI_ACCESS_POINT true 
 #define WIFI_SERVER       !WIFI_ACCESS_POINT
 #define STATIC_IP         false
 #define RESTART_WHEN_OPEN false
