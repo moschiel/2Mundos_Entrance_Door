@@ -1,6 +1,6 @@
 extern String logo_PNGbase64, snake_PNGbase64 ;
 bool bootOTA = false;
-bool webStored, SwebStored, snake, Referer, gotData;
+bool webStored, SwebStored, snake, Referer, gotData, admin;
 
 String sname,sscore;
 
@@ -12,14 +12,25 @@ void run_html(WiFiClient client){
     bootOTA     = false;
     Referer     = false;
     gotData     = false;
+    admin       = false;
 
     String firstLine = header.substring(0, header.indexOf("\n"));
     
     if(firstLine.indexOf("GET /door_open")>= 0){
       acionado = true;
+      // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+      // and a content-type so the client knows what's coming, then a blank line:
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type:text/plain");
+      //client.println("Connection: close");
+      client.println();
+      client.println("open");
+      // The HTTP response ends with another blank line
+      client.println();  
     }
     else if(firstLine.indexOf("GET /snake")>= 0){
       snake=true;
+      run_game(client);
     }  
     else if(firstLine.indexOf("GET /sdata")>= 0){
       snake=true;
@@ -60,31 +71,35 @@ void run_html(WiFiClient client){
       }else{
         Serial.println("score inválido");
       }
+      run_game(client);
     }else if (firstLine.indexOf("GET /null")>=0){
       webStored = false;
+      run_app(client);
     }else if (firstLine.indexOf("GET /snull")>=0){
       snake = true;
       SwebStored = false;
+      run_game(client);
     }else if (firstLine.indexOf("GET /boot")>=0){  
-      bootOTA = true;   
+      bootOTA = true;
+      run_boot(client);   
+    }else if (firstLine.indexOf("GET /admin")>=0){
+      webStored = false;  
+      admin = true;
+      run_app(client);   
+    }else{
+      run_app(client);
     }
-    
-    // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+
+}
+
+void run_game(WiFiClient client){
+  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
     // and a content-type so the client knows what's coming, then a blank line:
     client.println("HTTP/1.1 200 OK");
     client.println("Content-type:text/html");
     client.println("Connection: close");
     client.println();
-
-    if(bootOTA)
-      run_boot(client);
-    else if(snake)    
-      run_game(client);
-    else  
-      run_app(client);
-}
-
-void run_game(WiFiClient client){
+  
   client.print(
   "<!DOCTYPE html>" \
   "<html>" \
@@ -329,6 +344,14 @@ void run_game(WiFiClient client){
 }
 
 void run_boot(WiFiClient client){
+
+  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+    // and a content-type so the client knows what's coming, then a blank line:
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-type:text/html");
+    client.println("Connection: close");
+    client.println();
+    
     // Display the HTML web page
     client.println( \
     "<!DOCTYPE html>" \
@@ -354,6 +377,14 @@ void run_boot(WiFiClient client){
 }
 
 void run_app(WiFiClient client){
+
+  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+    // and a content-type so the client knows what's coming, then a blank line:
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-type:text/html");
+    client.println("Connection: close");
+    client.println();
+    
     // Display the HTML web page
     client.print( \
     "<!DOCTYPE html>" \
@@ -380,6 +411,7 @@ void run_app(WiFiClient client){
                     "var FuncDrawRoundBtn=function(text){" \ 
                         "var c = document.getElementById('myCanvas');" \
                         "var ctx = c.getContext('2d');" \
+                        "ctx.clearRect(0,0,c.width, c.height);" \
                         "ctx.beginPath();" \
                         "ctx.arc(w,w,r,0,2*Math.PI);" \ 
                         "ctx.lineWidth=3;" \
@@ -407,30 +439,62 @@ void run_app(WiFiClient client){
                             "if(k<1.0){" \
                                 "setTimeout(function(){DrawArc(false);},25);" \
                             "}else{" \
-                                "window.location.href='/door_open';" \
+                                "loadHttpRequest('/door_open');" \
                             "}" \
                         "}"    
                     "};" \
-                    "localStorage.setItem('storedDrawRoundBtn_1_7',FuncDrawRoundBtn.toString());" \ 
-                    "localStorage.setItem('storedDrawArc_1_7',FuncDrawArc.toString());" \
-                    "localStorage.setItem('Logo2mBase64_1_7','" + logo_PNGbase64 + "');" \
-                    "localStorage.setItem('snakeBase64_1_7','" + snake_PNGbase64 + "');" \    
+                    "var FuncHttpRequest = function(url){" \
+                        "var xhttp;" \
+                        "xhttp=new XMLHttpRequest();" \
+                        "xhttp.onreadystatechange = function() {" \
+                          "if (this.readyState == 4 && this.status == 200) {" \
+                              "console.log('XMLHttpResponde:');" \
+                              "console.log(String(this.responseText).trim());" \
+                              "if(String(this.responseText).trim() == 'open'){" \  
+                                  "DrawRoundBtn('PRONTO');" \
+                                  "DrawArc(true);");
+                                  #if WIFI_SERVER
+                                      if (admin==false){
+                                          static int cat_index = 0;
+                                          if(cat_index++ >= 56)
+                                              cat_index = 0;
+                                          client.print("setTimeout(()=> window.location.href = 'https://http.cat/" + String(http_cat[cat_index]) + "',2000);");
+                                      }else{
+                                          client.print("setTimeout(function(){DrawRoundBtn('ABRIR');},2000);");  
+                                      }
+                                  #else
+                                      client.print("setTimeout(function(){DrawRoundBtn('ABRIR');},2000);");
+                                  #endif
+                              client.print( \    
+                              "}" \
+                          "}" \
+                        "};" \
+                        "xhttp.open('GET', url, true);" \
+                        "xhttp.send();" \
+                    "};" \
+                    "localStorage.setItem('storedDrawRoundBtn_1_8',FuncDrawRoundBtn.toString());" \ 
+                    "localStorage.setItem('storedDrawArc_1_8',FuncDrawArc.toString());" \
+                    "localStorage.setItem('storedHttpReq_1_8',FuncHttpRequest.toString());" \
+                    "localStorage.setItem('Logo2mBase64_1_8','" + logo_PNGbase64 + "');" \
+                    "localStorage.setItem('snakeBase64_1_8','" + snake_PNGbase64 + "');" \    
                     );
                 }
                 
-                client.print( \
-                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_7');" \
-                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_7');" \
-                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_7');" \
-                    "var snakeBase64=localStorage.getItem('snakeBase64_1_7');" \
+                client.println( \
+                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_8');" \
+                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_8');" \
+                    "var storedHttpReq=localStorage.getItem('storedHttpReq_1_8');" \
+                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_8');" \
+                    "var snakeBase64=localStorage.getItem('snakeBase64_1_8');" \
                     "var DrawRoundBtn,DrawArc;" \
                     "var webStored;" \
-                    "if((storedDrawRoundBtn==null)||(storedDrawArc==null)||(Logo2mBase64==null)||(snakeBase64==null)){"
+                    "if((storedDrawRoundBtn==null)||(storedDrawArc==null) || (storedHttpReq==null)||(Logo2mBase64==null)||(snakeBase64==null)){"
                         "webStored=false;" \
                     "}else{" \
                         "webStored=true;" \
                         "DrawRoundBtn=eval('('+storedDrawRoundBtn+')');" \
                         "DrawArc=eval('('+storedDrawArc+')');" \
+                        "loadHttpRequest=eval('('+storedHttpReq+')');" \
                     "}" \
                     "var canvas_size=200;" \
                     "var w=canvas_size/2;" \
@@ -453,24 +517,10 @@ void run_app(WiFiClient client){
                         "window.location.href='/null';" \
                     "}else{"\  
                         "document.getElementById('logo2m').src=Logo2mBase64;" \
-                        "document.getElementById('snake').src=snakeBase64;");
-                    if(acionado == false){
-                        client.print( \
+                        "document.getElementById('snake').src=snakeBase64;" \
                         "DrawRoundBtn('ABRIR');" \
                         "var a = document.getElementById('myCanvas');" \
-                        "a.setAttribute( 'onClick', 'DrawArc(false)' );");
-                    }else{ // se acionado
-                        client.print( \
-                        "DrawRoundBtn('PRONTO');" \
-                        "DrawArc(true);");
-                        #if WIFI_SERVER
-                            static int cat_index = 0;
-                            if(cat_index++ >= 56)
-                                cat_index = 0;
-                        client.print("setTimeout(()=> window.location.href = 'https://http.cat/" + String(http_cat[cat_index]) + "',2000);");
-                        #endif
-                    }
-                client.println( \
+                        "a.setAttribute( 'onClick', 'DrawArc(false)' );" \
                     "}" \     
                 "</script>" \ 
             "</body>" \
