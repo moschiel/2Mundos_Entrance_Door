@@ -1,4 +1,4 @@
-#define WIFI_ACCESS_POINT true 
+#define WIFI_ACCESS_POINT false 
 #define WIFI_SERVER       !WIFI_ACCESS_POINT
 #define STATIC_IP         false
 #define RESTART_WHEN_OPEN false
@@ -15,7 +15,7 @@
     #include <WiFiAP.h>
     #include "esp_wifi.h"
     // Set these to your desired credentials.  
-    const char *ssid = "Vegeta>>>Goku";
+    const char *ssid = "2Mundos_Door";
     const char *password = "dragonball";
 #elif WIFI_SERVER
     const char *ssid = "2mundos.net";
@@ -56,41 +56,16 @@ void setup()
 {
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(DOOR_PIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(DOOR_PIN, LOW);
 
     Serial.begin(115200);
     Serial.println();
+    
     #if WIFI_ACCESS_POINT
-    Serial.println("Configuring access point...");
-    // You can remove the password parameter if you want the AP to be open.
-    WiFi.softAP(ssid, password);
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(myIP);
+        WiFi_AP();
     #elif WIFI_SERVER
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-    #if STATIC_IP
-    WiFi.disconnect();  //Prevent connecting to wifi based on previous configurations
-    WiFi.config(staticIP, subnet, gateway, dns);
-    #endif
-    WiFi.begin(ssid, password);
-    WiFi.mode(WIFI_STA); //WiFi mode station (connect to wifi router only
-
-    int i = 0;
-    while (WiFi.status() != WL_CONNECTED) 
-    {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(250);
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(250);
-        Serial.print(".");
-        if(i++ > 20)
-            ESP.restart();
-    }
-    Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.print("IP address: ");
-    Serial.print(WiFi.localIP());
+        WiFi_WS();
     #endif
 
     byte mac[6];
@@ -110,41 +85,39 @@ void setup()
 
 void loop() 
 {
+    //in the loop, check connection   
+    #if WIFI_SERVER
+    if((WiFi.status() != WL_CONNECTED))
+        WiFi_WS(); 
+    #endif
+
+    //in the loop, reset timer (feed watchdog)
     #if WATCHDOG 
         timerWrite(WDTtimer, 0); //reseta o temporizador (alimenta o watchdog) 
     #endif
+    
     acionado = false;
     WiFiClient client = server.available();   // listen for incoming clients
-    if (client) 
-    {                             // if you get a client,
+    if (client){                             // if you get a client,
         Serial.println("New Client.");           // print a message out the serial port
         String currentLine = "";                // make a String to hold incoming data from the client
         int connected_loop = 0;                 // variable to prevent a client from blocking the system
-        while (client.connected()) // loop while the client's connected
-        {    
-            if (client.available()) // if there's bytes to read from the client,
-            {
+        while (client.connected()){ // loop while the client's connected    
+            if (client.available()){ // if there's bytes to read from the client,
                 connected_loop = 0;         
                 char c = client.read();             // read a byte, then
-
-                //Serial.write(c);                    // print it out the serial monitor
+                Serial.write(c);                    // print it out the serial monitor
                 header += c;
-                if (c == '\n') // if the byte is a newline character
-                {                    
+                if (c == '\n'){ // if the byte is a newline character                    
                     // if the current line is blank, you got two newline characters in a row.
                     // that's the end of the client HTTP request, so send a response:
-                    if (currentLine.length() == 0) 
-                    {
+                    if (currentLine.length() == 0){
                         run_html(client);
                         break; // break out of the while loop:
-                    }
-                    else // if you got a newline, then clear currentLine:
-                    {    
+                    }else{ // if you got a newline, then clear currentLine:    
                         currentLine = "";
                     }
-                }
-                else if (c != '\r') // if you got anything else but a carriage return character, 
-                {  
+                }else if (c != '\r'){ // if you got anything else but a carriage return character,   
                     currentLine += c;      // add it to the end of the currentLine
                 }
             }
@@ -160,8 +133,7 @@ void loop()
         Serial.println("");
     }
 
-    if(acionado)
-    {
+    if(acionado){
         #if DOOR_TIMER
             DoorTimer_setup();
             digitalWrite(LED_BUILTIN, HIGH);
@@ -178,4 +150,41 @@ void loop()
             ESP.restart();
         #endif
     }
+}
+
+void WiFi_AP(){
+    Serial.println("Configuring access point...");
+    // You can remove the password parameter if you want the AP to be open.
+    WiFi.softAP(ssid, password);
+    IPAddress myIP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(myIP);
+}
+
+void WiFi_WS(){
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.disconnect();  //Prevent connecting to wifi based on previous configurations
+    #if STATIC_IP
+        WiFi.config(staticIP, subnet, gateway, dns);
+    #endif
+    WiFi.begin(ssid, password);
+    WiFi.mode(WIFI_STA); //WiFi mode station (connect to wifi router only
+
+    int i = 0;
+    while (WiFi.status() != WL_CONNECTED) 
+    {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(250);
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(250);
+        Serial.print(".");
+        if(i++ > 20)
+            ESP.restart();
+    }
+  
+    Serial.println("");
+    Serial.println("WiFi connected.");
+    Serial.print("IP address: ");
+    Serial.print(WiFi.localIP());
 }
