@@ -16,7 +16,7 @@
     #include "esp_wifi.h"
     // Set these to your desired credentials.  
     const char *ssid = "2Mundos_Door";
-    const char *password = "dragonball";
+    const char *password = "12345678";
 #elif WIFI_SERVER
     const char *ssid = "2mundos.net";
     const char *password = "doismundos";

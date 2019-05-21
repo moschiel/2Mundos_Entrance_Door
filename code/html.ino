@@ -39,68 +39,64 @@ void run_html(WiFiClient client )
                     "html{font-family:Helvetica;display:inline-block;margin:0px auto;text-align:center;}" \
                 "</style>" \
                 "<script>");
-                    if(!webStored){      
-                        client.print("localStorage.setItem('Logo2mBase64','" + logo_PNGbase64 + "');");
-                    }
+                if(!webStored){      
                     client.print( \
-                    "var DrawCircleButton,DrawArc;" \ 
-                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64');" \
-                    "if(Logo2mBase64 != null){"
-                        "var canvas_size=200;" \
-                        "var w=canvas_size/2;" \
-                        "var r=75;" \
-                        "DrawCircleButton=function(){" \ 
-                            "var c = document.getElementById('myCanvas');" \
-                            "var ctx = c.getContext('2d');" \
-                            "ctx.beginPath();" \
-                            "ctx.arc(w,w,r,0,2*Math.PI);" \ 
-                            "ctx.lineWidth=3;" \
-                            "ctx.strokeStyle='white';" \
-                            "ctx.stroke();" \
-                            "ctx.fillStyle='#0080ff';" \
-                            "ctx.fill();" \
-                            "ctx=c.getContext('2d');" \
-                            "ctx.font ='25pt Arial';" \
-                            "ctx.fillStyle = 'white';" \
-                            "ctx.textAlign = 'center';");
-                        if(acionado){
-                            client.print( \
-                            "ctx.fillText('PRONTO', 100, 110);" \
-                        "};"
-                        "DrawArc=function(){" \
-                            "var c = document.getElementById('myCanvas');" \
-                            "var ctx = c.getContext('2d');" \
-                            "ctx.beginPath();" \
-                            "ctx.arc(w,w,r+6,0,2*Math.PI);" \
-                            "ctx.lineWidth = 10;" \
-                            "ctx.strokeStyle='#4CAF50';" \
-                            "ctx.stroke();" \
-                        "};" \
-                     "}");
-                        }else{
-                            client.print( \
-                            "ctx.fillText('ABRIR', 100, 110);" \
-                        "};" \
-                        "var k = 0.0;" \
-                        "DrawArc=function(){" \
-                            "var c = document.getElementById('myCanvas');" \
-                            "var ctx = c.getContext('2d');" \
-                            "ctx.beginPath();" \
-                            "ctx.arc(w,w,r+6,0,2*Math.PI*k);" \
-                            "ctx.lineWidth = 10;" \
-                            "ctx.strokeStyle='#4CAF50';" \
-                            "ctx.stroke();" \
+                    "var FuncDrawRoundBtn=function(text){" \ 
+                        "var c = document.getElementById('myCanvas');" \
+                        "var ctx = c.getContext('2d');" \
+                        "ctx.beginPath();" \
+                        "ctx.arc(w,w,r,0,2*Math.PI);" \ 
+                        "ctx.lineWidth=3;" \
+                        "ctx.strokeStyle='white';" \
+                        "ctx.stroke();" \
+                        "ctx.fillStyle='#0080ff';" \
+                        "ctx.fill();" \
+                        "ctx=c.getContext('2d');" \
+                        "ctx.font ='25pt Arial';" \
+                        "ctx.fillStyle = 'white';" \
+                        "ctx.textAlign = 'center';" \
+                        "ctx.fillText(text, 100, 110);" \
+                    "};" \
+                    "var FuncDrawArc=function(fill){" \
+                        "var c = document.getElementById('myCanvas');" \
+                        "var ctx = c.getContext('2d');" \
+                        "ctx.beginPath();" \
+                        "if(fill==true){k=1;}" \
+                        "ctx.arc(w,w,r+6,0,2*Math.PI*k);" \
+                        "ctx.lineWidth = 10;" \
+                        "ctx.strokeStyle='#4CAF50';" \
+                        "ctx.stroke();" \
+                        "if(fill==false){"
                             "k=k+0.1;" \
                             "if(k<1.0){" \
-                                "setTimeout(function(){DrawArc();},25);" \
+                                "setTimeout(function(){DrawArc(false);},25);" \
                             "}else{" \
                                 "window.location.href='/door_open';" \
                             "}" \
-                        "};" \
-                     "}");   
-                      }
-                  
-                client.print( \    
+                        "}"    
+                    "};" \
+                    "localStorage.setItem('storedDrawRoundBtn_1_4',FuncDrawRoundBtn.toString());" \ 
+                    "localStorage.setItem('storedDrawArc_1_4',FuncDrawArc.toString());" \
+                    "localStorage.setItem('Logo2mBase64_1_4','" + logo_PNGbase64 + "');" \    
+                    );
+                }
+                    client.print( \
+                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_4');" \
+                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_4');" \
+                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_4');" \
+                    "var DrawRoundBtn,DrawArc;" \
+                    "var webStored;" \
+                    "if((storedDrawRoundBtn==null)||(storedDrawArc==null)||(Logo2mBase64==null)){"
+                        "webStored=false;" \
+                    "}else{" \
+                        "webStored=true;" \
+                        "DrawRoundBtn=eval('('+storedDrawRoundBtn+')');" \
+                        "DrawArc=eval('('+storedDrawArc+')');" \
+                    "}" \
+                    "var canvas_size=200;" \
+                    "var w=canvas_size/2;" \
+                    "var r=75;" \
+                    "var k=0;" \     
                 "</script>" \
             "</head>" \
             "<body style='background-color:#00004d;'>" \
@@ -112,27 +108,28 @@ void run_html(WiFiClient client )
                     "<canvas id='myCanvas' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \ 
                 "</p>" \
                 "<script>" \
-                    "if(Logo2mBase64 == null){" \
+                    "if(webStored==false){" \
                         "window.location.href='/null';" \
                     "}else{"\  
-                        "document.getElementById('logo2m').src=Logo2mBase64;" \
-                        "DrawCircleButton();");
+                        "document.getElementById('logo2m').src=Logo2mBase64;");
                     if(acionado == false){
                         client.print( \
+                        "DrawRoundBtn('ABRIR');" \
                         "var a = document.getElementById('myCanvas');" \
-                        "a.setAttribute( 'onClick', 'DrawArc()' );");
-                    }else{ //
-                        client.print("DrawArc();");
+                        "a.setAttribute( 'onClick', 'DrawArc(false)' );");
+                    }else{ // se acionado
+                        client.print( \
+                        "DrawRoundBtn('PRONTO');" \
+                        "DrawArc(true);");
                         #if WIFI_SERVER
                             static int cat_index = 0;
                             if(cat_index++ >= 56)
                                 cat_index = 0;
                         client.print("setTimeout(()=> window.location.href = 'https://http.cat/" + String(http_cat[cat_index]) + "',2000);");
-                        #elif WIFI_ACCES_POINT
-                        client.print("window.location.href='/door_open';");
                         #endif
                     }
-                client.println( \     
+                client.println( \
+                    "}" \     
                 "</script>");
              
             client.println( \  
