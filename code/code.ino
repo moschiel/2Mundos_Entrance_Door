@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 #include <WiFi.h>
 
-String VERSION = "1.5";
+String VERSION = "1.6";
 
 #if WIFI_ACCESS_POINT
     #include <WiFiClient.h>

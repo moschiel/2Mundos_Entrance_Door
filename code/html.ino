@@ -28,7 +28,7 @@ void run_html(WiFiClient client )
         "<html>" \
             "<head>" \
                 "<title>2Mundos - IoT Door</title>" \
-                "<link rel='icon' href='data:,'>" \  
+                "<link rel='icon' href='http://2mundos.net/favicon.png'>" \ 
                 "<meta charset='UTF-8'>" \
                 "<meta name='description' content='Interface web para controle da porta da 2Mundos'>" \
                 "<meta name='author' content='Roger Moschiel'>" \
