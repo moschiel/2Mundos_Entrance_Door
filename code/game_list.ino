@@ -26,18 +26,19 @@ void getList(){
 
 void resetList(){
   for(int i = 0; i < 10; i++){
+    
     for(int j = 0; j < 6; j++){
       if(j==5)
         EEPROM.write(name_addr+(i*6)+j,'\0');
       else 
-        EEPROM.write(name_addr+(i*6)+j,'A'); 
+        EEPROM.write(name_addr+(i*6)+j,'A');
     }
     
     for(int j = 0; j < 5; j++){
       if(j==4)
         EEPROM.write(score_addr+(i*5)+j,'\0');
       else 
-        EEPROM.write(score_addr+(i*5)+j,'0'); 
+        EEPROM.write(score_addr+(i*5)+j,'0');
     }
   }
   EEPROM.commit();

@@ -327,10 +327,13 @@ void run_game(WiFiClient client){
           "if((stored_points==" + sscore + ") && confirm('Não foi possível registrar, tente novamente')){" \
               "window.location.href='/sdata:" + sname + "," + sscore + ",';" \
           "}else{" \
+              "sessionStorage.setItem('snake-points',0);" \
               "window.onload=loadGame(" + String(String(&score[9][0]).toInt()) + ");" \
           "}");
         }else{
-          client.print("window.onload=loadGame(" + String(String(&score[9][0]).toInt()) + ");"); 
+          client.print( \
+          "sessionStorage.setItem('snake-points',0);" \
+          "window.onload=loadGame(" + String(String(&score[9][0]).toInt()) + ");");      
         }
         client.println( \
         "}" \
@@ -441,7 +444,9 @@ void run_app(WiFiClient client){
                             "}else{" \
                                 "loadHttpRequest('/door_open');" \
                             "}" \
-                        "}"    
+                        "}else{" \
+                            "k=0;" \
+                        "}" \     
                     "};" \
                     "var FuncHttpRequest = function(url){" \
                         "var xhttp;" \
@@ -472,20 +477,20 @@ void run_app(WiFiClient client){
                         "xhttp.open('GET', url, true);" \
                         "xhttp.send();" \
                     "};" \
-                    "localStorage.setItem('storedDrawRoundBtn_1_8',FuncDrawRoundBtn.toString());" \ 
-                    "localStorage.setItem('storedDrawArc_1_8',FuncDrawArc.toString());" \
-                    "localStorage.setItem('storedHttpReq_1_8',FuncHttpRequest.toString());" \
-                    "localStorage.setItem('Logo2mBase64_1_8','" + logo_PNGbase64 + "');" \
-                    "localStorage.setItem('snakeBase64_1_8','" + snake_PNGbase64 + "');" \    
+                    "localStorage.setItem('storedDrawRoundBtn_1_9',FuncDrawRoundBtn.toString());" \ 
+                    "localStorage.setItem('storedDrawArc_1_9',FuncDrawArc.toString());" \
+                    "localStorage.setItem('storedHttpReq_1_9',FuncHttpRequest.toString());" \
+                    "localStorage.setItem('Logo2mBase64_1_9','" + logo_PNGbase64 + "');" \
+                    "localStorage.setItem('snakeBase64_1_9','" + snake_PNGbase64 + "');" \    
                     );
                 }
                 
                 client.println( \
-                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_8');" \
-                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_8');" \
-                    "var storedHttpReq=localStorage.getItem('storedHttpReq_1_8');" \
-                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_8');" \
-                    "var snakeBase64=localStorage.getItem('snakeBase64_1_8');" \
+                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_9');" \
+                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_9');" \
+                    "var storedHttpReq=localStorage.getItem('storedHttpReq_1_9');" \
+                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_9');" \
+                    "var snakeBase64=localStorage.getItem('snakeBase64_1_9');" \
                     "var DrawRoundBtn,DrawArc;" \
                     "var webStored;" \
                     "if((storedDrawRoundBtn==null)||(storedDrawArc==null) || (storedHttpReq==null)||(Logo2mBase64==null)||(snakeBase64==null)){"
