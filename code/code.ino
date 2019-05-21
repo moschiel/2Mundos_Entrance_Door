@@ -174,6 +174,10 @@ void WiFi_WS(){
     int i = 0;
     while (WiFi.status() != WL_CONNECTED) 
     {
+        //in the loop, reset timer (feed watchdog)
+        //#if WATCHDOG 
+        //    timerWrite(WDTtimer, 0); //reseta o temporizador (alimenta o watchdog) 
+        //#endif
         digitalWrite(LED_BUILTIN, HIGH);
         delay(250);
         digitalWrite(LED_BUILTIN, LOW);

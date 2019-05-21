@@ -1,3 +1,5 @@
+extern String logo_PNGbase64;
+
 void run_html(WiFiClient client )
 {
       // turns the GPIOs on and off
@@ -92,7 +94,9 @@ void run_html(WiFiClient client )
                 "</script>" \
             "</head>" \
             "<body style='background-color:#00004d;'>" \
-                "<h1 style='color:white;font-size:40px;margin: 2px;'>2Mundos</h1>" \
+                "<p>" \
+                    "<img src='" + logo_PNGbase64 + "' style='width:300px;'>" \
+                "</p>" \
                 "<hr>" \
                 "<p>" \
                     "<canvas id='myCanvas' width='200' height='200' style='border:1px solid #00004d;'></canvas>" \ 
