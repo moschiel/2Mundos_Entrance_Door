@@ -1,9 +1,10 @@
-#define WIFI_ACCESS_POINT true 
+#define WIFI_ACCESS_POINT false 
 #define WIFI_SERVER       !WIFI_ACCESS_POINT
 #define STATIC_IP         false
 #define RESTART_WHEN_OPEN false
 #define WATCHDOG          true
 #define DOOR_TIMER        false
+#define RESET_GAME_LIST   false
 
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
 #define DOOR_PIN 4
@@ -11,7 +12,13 @@
 #include <EEPROM.h>
 #include <WiFi.h>
 
-String VERSION = "1.6";
+String VERSION = "1.7";
+uint8_t boot_addr = 10;
+uint8_t name_addr = 20; //20 + 10*6 = 80
+uint8_t score_addr = 80; //80 +10*5 = 130
+extern char names[10][6]; //5 caracteres mais null ('roger\0')
+extern char score[10][5]; //4 caracteres mais null ('9999\0')
+
 
 #if WIFI_ACCESS_POINT
     #include <WiFiClient.h>
@@ -48,13 +55,7 @@ hw_timer_t * DoorTimer = NULL;
 extern void WDT_setup();
 extern bool bootOTA;
 
-void printMac(byte *mac){
-    char buff[50];    
-    sprintf(buff, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-        mac[0], mac[1], mac[2], 
-        mac[3], mac[4], mac[5]);
-    Serial.print(buff);
-}
+
 
 void setup() 
 {
@@ -67,6 +68,25 @@ void setup()
     Serial.println();
     Serial.print("Version: ");
     Serial.println(VERSION);
+
+    if (!EEPROM.begin(200)){
+      Serial.println("failed to initialise EEPROM"); 
+      ESP.restart();
+    }
+    
+    #if RESET_GAME_LIST
+      resetList();
+      Serial.println("GAME RECORDS RESET...");
+      getList();
+      String list="";
+      for (int i = 0; i<10; i++){
+        list += String(&names[i][0]) + " " + String(&score[i][0]) + "\n";
+      }
+      Serial.println(list);
+      while(true);
+    #else
+      getList();      
+    #endif
     
     #if WIFI_ACCESS_POINT
         WiFi_AP();
@@ -74,14 +94,9 @@ void setup()
         WiFi_WS();
     #endif
 
-    if (!EEPROM.begin(20)){
-      Serial.println("failed to initialise EEPROM"); 
-      ESP.restart();
-    }
-
-    if(EEPROM.read(10) == 1){
+    if(EEPROM.read(boot_addr) == 1){
       Serial.println("Initializing OTA..."); 
-      EEPROM.write(10, 0); //escreve 0 no endereco 10
+      EEPROM.write(boot_addr, 0); //escreve 0 no endereco 10
       EEPROM.commit();
       bootLoaderOTA();
     }
@@ -171,15 +186,10 @@ void loop()
 
     
     if(bootOTA){
-      if (!EEPROM.begin(20)){
-        Serial.println("failed to initialise EEPROM");
-        ESP.restart(); 
-      }else{
-        EEPROM.write(10, 1); //escreve 1 no endereco 10
+        EEPROM.write(boot_addr, 1); //escreve 1 no endereco 10
         EEPROM.commit();
         delay(500);
         ESP.restart(); 
-      }
     }
     
 }
