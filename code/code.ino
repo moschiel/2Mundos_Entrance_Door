@@ -1,4 +1,3 @@
-
 #define WIFI_ACCESS_POINT false 
 #define WIFI_SERVER       !WIFI_ACCESS_POINT
 #define STATIC_IP         false
@@ -13,7 +12,7 @@
 #include <EEPROM.h>
 #include <WiFi.h>
 
-String VERSION = "1.9";
+String VERSION = "1.10";
 uint8_t boot_addr = 10;
 uint8_t name_addr = 20; //20 + 10*6 = 80
 uint8_t score_addr = 80; //80 +10*5 = 130

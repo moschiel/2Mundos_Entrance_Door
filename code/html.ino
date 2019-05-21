@@ -1,3 +1,5 @@
+#define ADMIN false  //use ip/admin to avoid redirect page, if set false redirection is always avoided
+
 extern String logo_PNGbase64, snake_PNGbase64 ;
 bool bootOTA = false;
 bool webStored, SwebStored, snake, Referer, gotData, admin;
@@ -82,13 +84,24 @@ void run_html(WiFiClient client){
     }else if (firstLine.indexOf("GET /boot")>=0){  
       bootOTA = true;
       run_boot(client);   
-    }else if (firstLine.indexOf("GET /admin")>=0){
-      webStored = false;  
-      admin = true;
-      run_app(client);   
-    }else{
-      run_app(client);
     }
+    #if ADMIN
+        else if (firstLine.indexOf("GET /admin")>=0){
+          webStored = false;  
+          admin = true;
+          run_app(client);
+             
+        }
+        else{
+          run_app(client);
+        }
+    #else
+        else{
+          admin = true; 
+          run_app(client);
+        }
+    #endif
+
 
 }
 
