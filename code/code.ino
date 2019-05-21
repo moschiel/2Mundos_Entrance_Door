@@ -8,7 +8,10 @@
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
 #define DOOR_PIN 4
 
+#include <EEPROM.h>
 #include <WiFi.h>
+
+String VERSION = "1.5";
 
 #if WIFI_ACCESS_POINT
     #include <WiFiClient.h>
@@ -43,6 +46,7 @@ WiFiServer server(80);
 hw_timer_t * WDTtimer = NULL; //faz o controle do temporizador (interrupção por tempo)
 hw_timer_t * DoorTimer = NULL;
 extern void WDT_setup();
+extern bool bootOTA;
 
 void printMac(byte *mac){
     char buff[50];    
@@ -61,12 +65,26 @@ void setup()
 
     Serial.begin(115200);
     Serial.println();
+    Serial.print("Version: ");
+    Serial.println(VERSION);
     
     #if WIFI_ACCESS_POINT
         WiFi_AP();
     #elif WIFI_SERVER
         WiFi_WS();
     #endif
+
+    if (!EEPROM.begin(20)){
+      Serial.println("failed to initialise EEPROM"); 
+      ESP.restart();
+    }
+
+    if(EEPROM.read(10) == 1){
+      Serial.println("Initializing OTA..."); 
+      EEPROM.write(10, 0); //escreve 0 no endereco 10
+      EEPROM.commit();
+      bootLoaderOTA();
+    }
 
     byte mac[6];
     Serial.print(" - MacAddress:");
@@ -150,6 +168,20 @@ void loop()
             ESP.restart();
         #endif
     }
+
+    
+    if(bootOTA){
+      if (!EEPROM.begin(20)){
+        Serial.println("failed to initialise EEPROM");
+        ESP.restart(); 
+      }else{
+        EEPROM.write(10, 1); //escreve 1 no endereco 10
+        EEPROM.commit();
+        delay(500);
+        ESP.restart(); 
+      }
+    }
+    
 }
 
 void WiFi_AP(){
@@ -172,6 +204,8 @@ void WiFi_WS(){
     WiFi.mode(WIFI_STA); //WiFi mode station (connect to wifi router only
 
     int i = 0;
+    
+    //while (WiFi.waitForConnectResult() != WL_CONNECTED)
     while (WiFi.status() != WL_CONNECTED) 
     {
         //in the loop, reset timer (feed watchdog)
@@ -190,5 +224,5 @@ void WiFi_WS(){
     Serial.println("");
     Serial.println("WiFi connected.");
     Serial.print("IP address: ");
-    Serial.print(WiFi.localIP());
+    Serial.println(WiFi.localIP());
 }

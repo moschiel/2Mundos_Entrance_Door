@@ -1,8 +1,12 @@
 extern String logo_PNGbase64;
+bool bootOTA = false;
 bool webStored;
 
 void run_html(WiFiClient client )
 {
+    
+    bootOTA = (header.indexOf("GET /boot")>=0);
+    
     webStored = !(header.indexOf("GET /null")>=0);
     
       // turns the GPIOs on and off
@@ -75,15 +79,16 @@ void run_html(WiFiClient client )
                             "}" \
                         "}"    
                     "};" \
-                    "localStorage.setItem('storedDrawRoundBtn_1_4',FuncDrawRoundBtn.toString());" \ 
-                    "localStorage.setItem('storedDrawArc_1_4',FuncDrawArc.toString());" \
-                    "localStorage.setItem('Logo2mBase64_1_4','" + logo_PNGbase64 + "');" \    
+                    "localStorage.setItem('storedDrawRoundBtn_1_5',FuncDrawRoundBtn.toString());" \ 
+                    "localStorage.setItem('storedDrawArc_1_5',FuncDrawArc.toString());" \
+                    "localStorage.setItem('Logo2mBase64_1_5','" + logo_PNGbase64 + "');" \    
                     );
                 }
+                if(!bootOTA){
                     client.print( \
-                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_4');" \
-                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_4');" \
-                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_4');" \
+                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_5');" \
+                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_5');" \
+                    "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_5');" \
                     "var DrawRoundBtn,DrawArc;" \
                     "var webStored;" \
                     "if((storedDrawRoundBtn==null)||(storedDrawArc==null)||(Logo2mBase64==null)){"
@@ -96,16 +101,23 @@ void run_html(WiFiClient client )
                     "var canvas_size=200;" \
                     "var w=canvas_size/2;" \
                     "var r=75;" \
-                    "var k=0;" \     
+                    "var k=0;");
+                }
+                client.print( \     
                 "</script>" \
             "</head>" \
-            "<body style='background-color:#00004d;'>" \
+            "<body style='background-color:#00004d;'>");
+            if(bootOTA){
+                client.print("<p style='color:white;'>BOOTLOADER MODE</p>");
+            }else{
+                client.print( \
                 "<p>" \
                     "<img id='logo2m' src='' style='width:300px;'>" \
                 "</p>" \
                 "<hr>" \
                 "<p>" \
-                    "<canvas id='myCanvas' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \ 
+                    "<canvas id='myCanvas' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \
+                    "<p style='color:white;position:fixed;bottom: 0px;'>Version: " + VERSION + "</p>" \ 
                 "</p>" \
                 "<script>" \
                     "if(webStored==false){" \
@@ -131,7 +143,7 @@ void run_html(WiFiClient client )
                 client.println( \
                     "}" \     
                 "</script>");
-             
+            }
             client.println( \  
             "</body>" \
         "</html>");
