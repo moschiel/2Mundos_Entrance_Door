@@ -7,12 +7,14 @@
 #define RESET_GAME_LIST   false
 
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
-#define DOOR_PIN 4
+#define DOOR_PIN 5
+#define G1_PIN 19
+#define G2_PIN 18
 
 #include <EEPROM.h>
 #include <WiFi.h>
 
-String VERSION = "1.10";
+String VERSION = "1.11";
 uint8_t boot_addr = 10;
 uint8_t name_addr = 20; //20 + 10*6 = 80
 uint8_t score_addr = 80; //80 +10*5 = 130
@@ -49,6 +51,9 @@ extern char score[10][5]; //4 caracteres mais null ('9999\0')
 // Variable to store the HTTP request
 String header;
 bool acionado;
+bool acionado_entrance;
+bool acionado_G1;
+bool acionado_G2;
 WiFiServer server(80);
 hw_timer_t * WDTtimer = NULL; //faz o controle do temporizador (interrupção por tempo)
 hw_timer_t * DoorTimer = NULL;
@@ -59,10 +64,15 @@ extern bool bootOTA;
 
 void setup() 
 {
+    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(DOOR_PIN, !LOW);
+    digitalWrite(G1_PIN, !LOW);
+    digitalWrite(G2_PIN, !LOW);
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(DOOR_PIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, LOW);
-    digitalWrite(DOOR_PIN, LOW);
+    pinMode(G1_PIN, OUTPUT);
+    pinMode(G2_PIN, OUTPUT);
+    
 
     Serial.begin(115200);
     Serial.println();
@@ -130,6 +140,10 @@ void loop()
     #endif
     
     acionado = false;
+    acionado_entrance = false;
+    acionado_G1 = false;
+    acionado_G2 = false;
+    
     WiFiClient client = server.available();   // listen for incoming clients
     if (client){                             // if you get a client,
         Serial.println("New Client.");           // print a message out the serial port
@@ -172,11 +186,21 @@ void loop()
             digitalWrite(LED_BUILTIN, HIGH);
             digitalWrite(DOOR_PIN, HIGH);
         #else
+            static uint8_t pin;
+            if(acionado_entrance){
+              pin = DOOR_PIN;
+            }else if(acionado_G1 ){
+              pin = G1_PIN;
+            }else if(acionado_G2 ){
+              pin = G2_PIN;
+            }
+            
             digitalWrite(LED_BUILTIN, HIGH);
-            digitalWrite(DOOR_PIN, HIGH);
+            digitalWrite(pin, !HIGH);
             delay(500);
             digitalWrite(LED_BUILTIN, LOW);
-            digitalWrite(DOOR_PIN, LOW);
+            digitalWrite(pin, !LOW);
+            
         #endif
         
         #if RESTART_WHEN_OPEN

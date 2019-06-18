@@ -8,6 +8,9 @@ String sname,sscore;
 
 void run_html(WiFiClient client){
     acionado    = false;
+    acionado_entrance = false;
+    acionado_G1 = false;
+    acionado_G2 = false;
     snake       = false;
     webStored   = true;
     SwebStored  = true;
@@ -20,6 +23,33 @@ void run_html(WiFiClient client){
     
     if(firstLine.indexOf("GET /door_open")>= 0){
       acionado = true;
+      acionado_entrance = true;
+      // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+      // and a content-type so the client knows what's coming, then a blank line:
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type:text/plain");
+      //client.println("Connection: close");
+      client.println();
+      client.println("open");
+      // The HTTP response ends with another blank line
+      client.println();  
+    }
+    else if(firstLine.indexOf("GET /g1_open")>= 0){
+      acionado = true;
+      acionado_G1 = true;
+      // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+      // and a content-type so the client knows what's coming, then a blank line:
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type:text/plain");
+      //client.println("Connection: close");
+      client.println();
+      client.println("open");
+      // The HTTP response ends with another blank line
+      client.println();  
+    }
+    else if(firstLine.indexOf("GET /g2_open")>= 0){
+      acionado = true;
+      acionado_G2 = true;
       // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
       // and a content-type so the client knows what's coming, then a blank line:
       client.println("HTTP/1.1 200 OK");
@@ -424,9 +454,12 @@ void run_app(WiFiClient client){
                 "<script>");
                 if(!webStored){      
                     client.print( \
-                    "var FuncDrawRoundBtn=function(text){" \ 
-                        "var c = document.getElementById('myCanvas');" \
+                    "var FuncDrawRoundBtn=function(canvasId, text){" \ 
+                        "var c = document.getElementById(canvasId);" \
                         "var ctx = c.getContext('2d');" \
+                        "var canvas_size = c.offsetWidth;" \
+                        "var w = canvas_size/2;" \
+                        "var r = w*0.75;" \
                         "ctx.clearRect(0,0,c.width, c.height);" \
                         "ctx.beginPath();" \
                         "ctx.arc(w,w,r,0,2*Math.PI);" \ 
@@ -436,14 +469,28 @@ void run_app(WiFiClient client){
                         "ctx.fillStyle='#0080ff';" \
                         "ctx.fill();" \
                         "ctx=c.getContext('2d');" \
-                        "ctx.font ='25pt Arial';" \
+                        "ctx.font ='15pt Arial';" \
                         "ctx.fillStyle = 'white';" \
                         "ctx.textAlign = 'center';" \
-                        "ctx.fillText(text, 100, 110);" \
+                        "ctx.fillText(text, w, w*1.1);" \
                     "};" \
-                    "var FuncDrawArc=function(fill){" \
-                        "var c = document.getElementById('myCanvas');" \
+                    "var FuncDrawArc=function(canvasId, fill, text){" \
+                        "var c = document.getElementById(canvasId);" \
                         "var ctx = c.getContext('2d');" \
+                        "var canvas_size = c.offsetWidth;" \
+                        "var w = canvas_size/2;" \
+                        "var r = w*0.75;" \
+                        "var url;" \
+                        "if(canvasId == 'myCanvas1'){" \
+                            "url = '/door_open';" \
+                            "k=arc1;" \
+                        "}else if(canvasId == 'myCanvas2'){" \
+                            "url = '/g1_open';" \
+                            "k=arc2;" \
+                        "}else if(canvasId == 'myCanvas3'){" \
+                            "url = '/g2_open';" \
+                            "k=arc3;" \      
+                        "}" \ 
                         "ctx.beginPath();" \
                         "if(fill==true){k=1;}" \
                         "ctx.arc(w,w,r+6,0,2*Math.PI*k);" \
@@ -453,55 +500,55 @@ void run_app(WiFiClient client){
                         "if(fill==false){"
                             "k=k+0.1;" \
                             "if(k<1.0){" \
-                                "setTimeout(function(){DrawArc(false);},25);" \
+                                "setTimeout(function(){DrawArc(canvasId,false,text);},25);" \
                             "}else{" \
-                                "loadHttpRequest('/door_open');" \
+                                "loadHttpRequest(canvasId, text, url);" \
                             "}" \
                         "}else{" \
                             "k=0;" \
+                        "}" \
+                        "if(canvasId == 'myCanvas1'){" \
+                             "arc1=k;" \
+                        "}else if(canvasId == 'myCanvas2'){" \
+                             "arc2=k;" \
+                        "}else if(canvasId == 'myCanvas3'){" \
+                             "arc3=k;" \      
                         "}" \     
                     "};" \
-                    "var FuncHttpRequest = function(url){" \
+                    "var FuncHttpRequest = function(canvasId, text, url){" \
                         "var xhttp;" \
+                        "console.log(canvasId);" \
+                        "console.log(text);" \
+                        "console.log(url);" \
                         "xhttp=new XMLHttpRequest();" \
                         "xhttp.onreadystatechange = function() {" \
                           "if (this.readyState == 4 && this.status == 200) {" \
                               "console.log('XMLHttpResponde:');" \
                               "console.log(String(this.responseText).trim());" \
                               "if(String(this.responseText).trim() == 'open'){" \  
-                                  "DrawRoundBtn('PRONTO');" \
-                                  "DrawArc(true);");
-                                  #if WIFI_SERVER
-                                      if (admin==false){
-                                          static int cat_index = 0;
-                                          if(cat_index++ >= 56)
-                                              cat_index = 0;
-                                          client.print("setTimeout(()=> window.location.href = 'https://http.cat/" + String(http_cat[cat_index]) + "',2000);");
-                                      }else{
-                                          client.print("setTimeout(function(){DrawRoundBtn('ABRIR');},2000);");  
-                                      }
-                                  #else
-                                      client.print("setTimeout(function(){DrawRoundBtn('ABRIR');},2000);");
-                                  #endif
-                              client.print( \    
+                                  "DrawRoundBtn(canvasId,'OK');" \
+                                  "console.log(text);" \
+                                  "DrawArc(canvasId, true, text);" \
+                                  "console.log(text);" \
+                                  "setTimeout(function(){DrawRoundBtn(canvasId,text);},2000);" \    
                               "}" \
                           "}" \
                         "};" \
                         "xhttp.open('GET', url, true);" \
                         "xhttp.send();" \
                     "};" \
-                    "localStorage.setItem('storedDrawRoundBtn_1_9',FuncDrawRoundBtn.toString());" \ 
-                    "localStorage.setItem('storedDrawArc_1_9',FuncDrawArc.toString());" \
-                    "localStorage.setItem('storedHttpReq_1_9',FuncHttpRequest.toString());" \
+                    "localStorage.setItem('storedDrawRoundBtn_1_11',FuncDrawRoundBtn.toString());" \ 
+                    "localStorage.setItem('storedDrawArc_1_11',FuncDrawArc.toString());" \
+                    "localStorage.setItem('storedHttpReq_1_11',FuncHttpRequest.toString());" \
                     "localStorage.setItem('Logo2mBase64_1_9','" + logo_PNGbase64 + "');" \
                     "localStorage.setItem('snakeBase64_1_9','" + snake_PNGbase64 + "');" \    
                     );
                 }
                 
                 client.println( \
-                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_9');" \
-                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_9');" \
-                    "var storedHttpReq=localStorage.getItem('storedHttpReq_1_9');" \
+                    "var storedDrawRoundBtn=localStorage.getItem('storedDrawRoundBtn_1_11');" \
+                    "var storedDrawArc=localStorage.getItem('storedDrawArc_1_11');" \
+                    "var storedHttpReq=localStorage.getItem('storedHttpReq_1_11');" \
                     "var Logo2mBase64=localStorage.getItem('Logo2mBase64_1_9');" \
                     "var snakeBase64=localStorage.getItem('snakeBase64_1_9');" \
                     "var DrawRoundBtn,DrawArc;" \
@@ -514,10 +561,10 @@ void run_app(WiFiClient client){
                         "DrawArc=eval('('+storedDrawArc+')');" \
                         "loadHttpRequest=eval('('+storedHttpReq+')');" \
                     "}" \
-                    "var canvas_size=200;" \
-                    "var w=canvas_size/2;" \
-                    "var r=75;" \
-                    "var k=0;" \     
+                    "var k=0;" \
+                    "var arc1=0;" \
+                    "var arc2=0;" \
+                    "var arc3=0;" \     
                 "</script>" \
             "</head>" \
             "<body style='background-color:#00004d;'>" \
@@ -525,20 +572,30 @@ void run_app(WiFiClient client){
                     "<img id='logo2m' src='' style='width:300px;'>" \
                 "</p>" \
                 "<hr>" \
-                "<p>" \
-                    "<canvas id='myCanvas' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \
+                    "<p>" \    
+                        "<canvas id='myCanvas1' width='200' height='200' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \
+                    "</p>" \
+                    "<p>" \
+                        "<canvas id='myCanvas2' width='100' height='100' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \
+                        "<canvas id='myCanvas3' width='100' height='100' style='cursor:pointer;border:1px solid #00004d;'></canvas>" \
+                    "</p>" \    
                     "<p style='color:white;position:fixed;bottom: 0px;'>Version: " + VERSION + "</p>" \ 
                     "<a href='/snake'><img id='snake' src='' style='position:absolute;bottom:8px;right: 16px;'></a>" \
-                "</p>" \
                 "<script>" \
                     "if(webStored==false){" \
                         "window.location.href='/null';" \
                     "}else{"\  
                         "document.getElementById('logo2m').src=Logo2mBase64;" \
                         "document.getElementById('snake').src=snakeBase64;" \
-                        "DrawRoundBtn('ABRIR');" \
-                        "var a = document.getElementById('myCanvas');" \
-                        "a.setAttribute( 'onClick', 'DrawArc(false)' );" \
+                        "DrawRoundBtn('myCanvas1', 'ENTRANCE');" \
+                        "var a = document.getElementById('myCanvas1');" \
+                        "a.setAttribute( 'onClick', \"DrawArc('myCanvas1',false,'ENTRANCE')\" );" \
+                        "DrawRoundBtn('myCanvas2', 'G1');" \
+                        "var b = document.getElementById('myCanvas2');" \
+                        "b.setAttribute( 'onClick', \"DrawArc('myCanvas2',false,'G1')\" );" \
+                        "DrawRoundBtn('myCanvas3', 'G2');" \
+                        "var c = document.getElementById('myCanvas3');" \
+                        "c.setAttribute( 'onClick', \"DrawArc('myCanvas3',false,'G2')\" );" \
                     "}" \     
                 "</script>" \ 
             "</body>" \
