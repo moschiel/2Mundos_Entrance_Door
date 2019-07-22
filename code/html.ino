@@ -475,6 +475,15 @@ void run_app(WiFiClient client){
                         "ctx.fillText(text, w, w*1.1);" \
                     "};" \
                     "var FuncDrawArc=function(canvasId, fill, text){" \
+                        "var element = document.getElementById(canvasId);" \
+                        "element.onclick = function(){return false;}" \
+                        
+                        "if(RequestOK == true && fill == false){" \
+                            "k=0.1;" \
+                            "RequestOK = false;" \
+                            "element.setAttribute( 'onClick', 'DrawArc(' + canvasId +',false,' + text + ')' );" \
+                            "return;" \
+                        "}" \
                         "var c = document.getElementById(canvasId);" \
                         "var ctx = c.getContext('2d');" \
                         "var canvas_size = c.offsetWidth;" \
@@ -493,19 +502,34 @@ void run_app(WiFiClient client){
                         "}" \ 
                         "ctx.beginPath();" \
                         "if(fill==true){k=1;}" \
-                        "ctx.arc(w,w,r+6,0,2*Math.PI*k);" \
-                        "ctx.lineWidth = 10;" \
-                        "ctx.strokeStyle='#4CAF50';" \
+                        "if(j==0){" \
+                            "ctx.arc(w,w,r+6,1.5*Math.PI,(1.5+k)*Math.PI);" \
+                            "ctx.lineWidth = 10;" \
+                            "ctx.strokeStyle='#4CAF50';" \
+                        "}else{" \
+                            "ctx.arc(w,w,r+7,1.5*Math.PI,(1.5+k)*Math.PI);" \
+                            "ctx.lineWidth = 11;" \
+                            "ctx.strokeStyle='#00004d';" \
+                        "}" \
                         "ctx.stroke();" \
                         "if(fill==false){"
                             "k=k+0.1;" \
-                            "if(k<1.0){" \
-                                "setTimeout(function(){DrawArc(canvasId,false,text);},25);" \
+                            "if(k<2.1){" \
+                                "setTimeout(function(){DrawArc(canvasId,false,text);},50);" \
                             "}else{" \
-                                "loadHttpRequest(canvasId, text, url);" \
+                                "k = 0.1;" \
+                                "if(j==0){" \
+                                    "j = 1;" \
+                                    "loadHttpRequest(canvasId, text, url);" \
+                                "}else{" \
+                                    "j = 0;" \
+                                "}" \
+                                "if(!RequestOK){"
+                                    "setTimeout(function(){DrawArc(canvasId,false,text);},50);" \
+                                "}" \
                             "}" \
                         "}else{" \
-                            "k=0;" \
+                            "k=0.1;" \
                         "}" \
                         "if(canvasId == 'myCanvas1'){" \
                              "arc1=k;" \
@@ -525,11 +549,10 @@ void run_app(WiFiClient client){
                           "if (this.readyState == 4 && this.status == 200) {" \
                               "console.log('XMLHttpResponde:');" \
                               "console.log(String(this.responseText).trim());" \
-                              "if(String(this.responseText).trim() == 'open'){" \  
+                              "if(String(this.responseText).trim() == 'open'){" \ 
+                                  "RequestOK = true;" \ 
                                   "DrawRoundBtn(canvasId,'OK');" \
-                                  "console.log(text);" \
                                   "DrawArc(canvasId, true, text);" \
-                                  "console.log(text);" \
                                   "setTimeout(function(){DrawRoundBtn(canvasId,text);},2000);" \    
                               "}" \
                           "}" \
@@ -561,10 +584,12 @@ void run_app(WiFiClient client){
                         "DrawArc=eval('('+storedDrawArc+')');" \
                         "loadHttpRequest=eval('('+storedHttpReq+')');" \
                     "}" \
-                    "var k=0;" \
+                    "var j=0;" \
+                    "var k=0.1;" \
                     "var arc1=0;" \
                     "var arc2=0;" \
-                    "var arc3=0;" \     
+                    "var arc3=0;" \
+                    "var RequestOK=false;" \     
                 "</script>" \
             "</head>" \
             "<body style='background-color:#00004d;'>" \
